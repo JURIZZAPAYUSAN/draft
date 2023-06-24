@@ -1,0 +1,122 @@
+---
+title: "Simple Linear Regression"
+author: "Jurizza Payusan"
+date: "2023-06-20"
+output: pdf_document
+---
+---
+STT152 Regression Analysis
+---
+
+# 1. The Rocket Propellant Data 
+
+A rocket motor is manufactured by bonding an igniter propellant and a sustainer propellant together inside a metal housing. The shear strength of the bond between the two types of propellant is an important quality characteristic. It is suspected that shear strength is related to the age in weeks of the batch of sustainer propellant. Twenty observations on shear strength and the age of the corresponding batch of propellant have been collected. 
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+data_rocketpropellant <- read.csv(file.choose(), header = T)
+
+pander::pander(data_rocketpropellant, digits = 2)
+```
+
+## a. Create a scatter diagram for the data. 
+
+```{r}
+# Scatter Plot
+suppressMessages(library(ggplot2))
+
+ggplot(data_rocketpropellant, aes(x = Age.of.Propellant..xi..weeks., y = Shear.Strength..yi.psi.)) +
+  geom_point(color = "darkred", size = 1.8, alpha = 2) +
+  labs(x = "Age of Propellant (weeks)", y = "Shear Strength (psi)") +
+  ggtitle("Scatter Diagram of Shear Strength vs. Propellant Age") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size =  12),
+        axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10, face = "bold"),
+        panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.01),
+        panel.grid.minor = element_blank())
+```
+
+# 2. Least-Squares Estimation of the Parameters
+
+## a. The least-squares fit 
+
+```{r}
+# Calculate linear model based on the data set
+linear_model <- lm(data = data_rocketpropellant, formula = (y = Shear.Strength..yi.psi.) ~ (x = Age.of.Propellant..xi..weeks.))
+```
+
+
+```{r}
+# View the names of the objects in the linear model
+names(linear_model)
+```
+```{r}
+# View the coefficients
+least_squares_fit <- linear_model$coefficients
+print(paste("Least-squares fit (intercept and slope):", least_squares_fit))
+```
+
+## b. The estimate of $\sigma^{}2$ 
+
+```{r}
+# Get the summary of the model
+model_summary <- summary(linear_model)
+
+# Access and print the estimated variance
+estimated_variance <- model_summary$sigma^2
+print(paste("The estimate of  variance is", estimated_variance))
+```
+
+# 3. Hypothesis Testing on the Slope and Intercept
+
+## a. Test for significance of regression in the rocket propellant regression model.
+
+```{r}
+suppressMessages(library(mosaic))
+
+# Calculate the critical value at a significance level of 0.975
+critical_value <- mosaic::xqt(0.975, 18)
+
+# Get the t-value for the Age.of.Propellant..xi..weeks. coefficient
+t_value <- model_summary$coefficients["x = Age.of.Propellant..xi..weeks.", "t value"]
+
+# Perform the significance test for regression
+if (abs(t_value) > critical_value) {
+  null_hypothesis_status <- "The null hypothesis is rejected"
+} else {
+ null_hypothesis_status <- "The null hypothesis is not rejected."
+}
+# Print the t-value, critical value, and null hypothesis status
+print(paste("Coefficient's t-value:", t_value))
+print(paste("Critical value (0.975, 18):", critical_value))
+print(null_hypothesis_status)
+```
+
+## b. Use an analysis-of-variance approach to test significance of regression.
+
+```{r}
+# Calculate the critical value at a significance level of 0.99
+critical_value <- mosaic::xqf(0.99,1,18)
+
+# Extract the p-value from the F-statistic object
+f_value <- model_summary$fstatistic["value"]
+
+# Perform the significance test for regression
+if (f_value > critical_value) {
+  null_hypothesis_status <- "The null hypothesis is rejected."
+} else {
+  null_hypothesis_status <- "The null hypothesis is not rejected."
+}
+
+# Print the p-value, critical value, and null hypothesis status
+print(paste("Coefficient's f-value:", f_value))
+print(paste("Critical value (0.99,1,18):", critical_value))
+print(null_hypothesis_status)
+```
+```{r}
+#ANOVA
+anova(linear_model)
+```
